@@ -61,13 +61,13 @@ orchestrator_prompts = ChatPromptTemplate.from_template(
 
     Selection Criteria for Options:
     1. 'web': Use for general facts, news, official websites, and broad overviews.
-    2. 'git': Use if the topic could involve code demos, public repositories or public github repositories files 
+    2. 'git': Use if the topic asked for code demos, public repositories or public github repositories files 
     3. 'db': Use ONLY if the content closely matches or overlaps with one of the titles in DB_CONTENT.
 
     Instructions:
-    - You must return a Python list of strings containing one or more of: ['web', 'git', 'db'].
+
     - Even for non-technical topics, think: "Is there likely a dataset or specialized tool for this on GitHub?" 
-    - For example, a geography topic like "Mountains" would need 'web' for facts and 'git' for GIS datasets or climate models.
+    - For example, a geography topic like "Mountains" would need 'web' for facts.
 
     Answer format:
     - Return ONLY a Python list of strings.
@@ -78,7 +78,7 @@ orchestrator_prompts = ChatPromptTemplate.from_template(
 
 response = orchestrator_model.invoke(
     orchestrator_prompts.format_messages(
-        user_content="virat kohli",
+        user_content="Explain langchain",
         db_content=['Langchain with postgres', 'Vector search', 'Large language models']
     )
 )
