@@ -90,7 +90,7 @@ def fetch_code(url: str):
             parts.append("".join(cell["source"]))
     code_text = "\n".join(parts)
     # code_text = resp.text
-    print(code_text)
+    # print(code_text)
     return code_text
 
 # fetch_code("https://raw.githubusercontent.com/splunk/splunk-mltk-container-docker/efa5f31e0fd8896fd62928b5f0d4d20f726b9033/notebooks/stumpy.ipynb")

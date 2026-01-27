@@ -16,8 +16,8 @@ load_dotenv()
 
 orchestrator_model = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY"),
-    model="llama-3.1-8b-instant",
-    temperature=0,
+    model="llama-3.3-70b-versatile",
+    temperature=0.5,
     max_tokens=None,
     # reasoning_format="parsed",
 )
@@ -61,7 +61,7 @@ orchestrator_prompts = ChatPromptTemplate.from_template(
 
     Selection Criteria for Options:
     1. 'web': Use for general facts, news, official websites, and broad overviews.
-    2. 'git': Use if the topic could involve technical implementations, datasets, public repositories, open-source projects, white papers, or curated resource lists (e.g., "Awesome-Himalaya-Data").
+    2. 'git': Use if the topic could involve code demos, public repositories or public github repositories files 
     3. 'db': Use ONLY if the content closely matches or overlaps with one of the titles in DB_CONTENT.
 
     Instructions:
@@ -70,7 +70,7 @@ orchestrator_prompts = ChatPromptTemplate.from_template(
     - For example, a geography topic like "Mountains" would need 'web' for facts and 'git' for GIS datasets or climate models.
 
     Answer format:
-    - Give answer ONLY as a list (e.g., ['web', 'git']).
+    - Return ONLY a Python list of strings.
     - No explanation, no intro text.
     """
 )
@@ -78,7 +78,7 @@ orchestrator_prompts = ChatPromptTemplate.from_template(
 
 response = orchestrator_model.invoke(
     orchestrator_prompts.format_messages(
-        user_content="give me code for simple langchain agent",
+        user_content="virat kohli",
         db_content=['Langchain with postgres', 'Vector search', 'Large language models']
     )
 )

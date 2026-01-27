@@ -10,7 +10,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import Send, interrupt, Command
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
-from services.web_search_agent_demo import web_agent
+from services.web_search_agent_demo import web_agent, web_search_agent_model
 from services.git_search import github_agent
 from services.db_query_demo import postgres_agent, get_pg_connection
 from services.orc_demo import orchestrator_model, orchestrator_prompts
@@ -176,8 +176,8 @@ def join_results_node(state: AgentState):
 async def final_summary_node(state: AgentState):
     print("\n Deep thinking on content... \n")
     combined = "\n\n".join(state["research_content"])
-    response = await orchestrator_model.ainvoke(
-        f"Summarize into a final research report:\n{combined}"
+    response = await web_search_agent_model.ainvoke(
+        f"Summarize into a final research report, if code demo present then write it as it is:\n{combined}"
     )
 
     print(f"\n\n Final Summary \n \n {response.content} \n \n")
@@ -203,7 +203,16 @@ def save_db_node(state: AgentState):
     conn.commit()
     cur.close()
     conn.close()
-    return state
+
+    new_state = {
+                    "content_to_research": "",
+                    "research_content": [],
+                    "node_to_call": [],
+                    "final_research_summary": "",
+                    "approval": None,
+                    "db_titles": [],
+                },
+    return new_state
 
 
 
