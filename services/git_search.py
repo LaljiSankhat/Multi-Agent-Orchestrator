@@ -1,7 +1,12 @@
 import os
 import requests
-from langchain_core.tools import tool
 from dotenv import load_dotenv
+
+from services.make_pretty_output import pretty
+
+from langchain_groq import ChatGroq
+from langchain.agents import create_agent
+from langchain_core.tools import Tool
 
 load_dotenv()
 
@@ -71,8 +76,121 @@ def search_github_files(research_topic: str):
     return results
 
 
+def fetch_code(url: str):
 
-l = search_github_files("tool calling")
+    # url = "https://raw.githubusercontent.com/langchain-ai/langchain/master/libs/langchain/langchain/chains/base.py"
 
-for r in l:
-    print("\n", r)
+    resp = requests.get(url)
+
+
+    nb = resp.json() 
+    parts = []
+    for cell in nb["cells"]:
+        if cell["cell_type"] in ("code", "markdown"):
+            parts.append("".join(cell["source"]))
+    code_text = "\n".join(parts)
+    # code_text = resp.text
+    print(code_text)
+    return code_text
+
+# fetch_code("https://raw.githubusercontent.com/splunk/splunk-mltk-container-docker/efa5f31e0fd8896fd62928b5f0d4d20f726b9033/notebooks/stumpy.ipynb")
+
+
+
+def code_generation(query: str):
+
+    API_KEY = os.getenv("GROQ_CODE_GENERATION_API_KEY")
+    model = "llama-3.3-70b-versatile"
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": model,
+        "messages": [
+            {"role": "user", "content": f"{query}"}
+        ]
+    }
+
+    resp = requests.post(url, headers=headers, json=data)
+    # print(resp.json().content)
+    data = resp.json()
+    output = data["choices"][0]["message"]["content"]
+    # print(output)
+    return output
+
+
+# code_generation("Write a C++ code for dijkstra algorithm")
+
+web_search_agent_model = ChatGroq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model="llama-3.3-70b-versatile",
+    temperature=0,
+    max_tokens=None,
+    # reasoning_format="parsed",
+)
+
+
+
+search_github_repo_tool = Tool(
+    name="search_github_repo_tool",
+    func=search_github_repositories,
+    description="Search GitHub for Python repositories related to a content"
+)
+
+search_github_files_tool = Tool(
+    name="search_github_files_tool",
+    func=search_github_files,
+    description="Search GitHub for Python files or notebooks related to a content"
+)
+
+code_generation_tool = Tool(
+    name="code_generation_tool",
+    func=code_generation,
+    description="generate code based on the user queries"
+)
+
+
+
+github_agent = create_agent(
+    model=web_search_agent_model,
+    tools=[search_github_repo_tool, search_github_files_tool, code_generation_tool],
+    system_prompt="""
+You are a professional github research agent.
+
+Your goal:
+- Use the search_github_repo_tool, search_github_files_tool and code_generation_tool tool to gather accurate, up-to-date information
+- If needed, call the tool multiple times
+- Verify information consistency
+- Remove noise, ads, and irrelevant content
+- Return combined output of all tool call results as it is not as summary
+""",
+)
+
+
+
+
+
+if __name__ == "__main__":
+    result = github_agent.invoke(
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": (
+                        "Explain LangChain. "
+                        "First find top GitHub repositories. "
+                        "Then find demo code or notebooks. "
+                        "Finally generate a simple example."
+                    ),
+                }
+            ]
+        }
+    )
+
+    print(pretty(result))
+
+    

@@ -11,7 +11,7 @@ from langgraph.types import Send, interrupt, Command
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from services.web_search_agent_demo import web_agent
-from services.github_search_agent_demo import github_agent
+from services.git_search import github_agent
 from services.db_query_demo import postgres_agent, get_pg_connection
 from services.orc_demo import orchestrator_model, orchestrator_prompts
 from services.make_pretty_output import pretty
@@ -126,12 +126,10 @@ async def github_search_node(state: AgentState):
                 {
                     "role": "user",
                     "content": (
-                        "Research the following topic thoroughly:\n\n"
-                        f"{state['content_to_research']}\n\n"
-                        "Instructions:\n"
-                        "- Prefer authoritative and recent sources\n"
-                        "- Merge overlapping information\n"
-                        "- Keep the output factual"
+                        f"for this {state['content_to_research']}\n\n"
+                        "First find top GitHub repositories. "
+                        "Then find demo code or notebooks. "
+                        "Finally generate a simple example."
                     ),
                 }
             ]
