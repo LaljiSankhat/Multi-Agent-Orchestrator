@@ -51,9 +51,9 @@ orchestrator_model = ChatGroq(
 
 orchestrator_prompts = ChatPromptTemplate.from_template(
     """
-    You are a professional research orchestrator. Your goal is to determine which search tools are required to gather comprehensive information on a topic.
+    You are a professional research orchestrator. Your goal is to determine which search tools are required to gather comprehensive information on a content.
 
-    USER_CONTENT (Topic to research):
+    USER_CONTENT (Content to research):
     {user_content}
 
     DB_CONTENT (Existing database titles):
@@ -61,8 +61,8 @@ orchestrator_prompts = ChatPromptTemplate.from_template(
 
     Selection Criteria for Options:
     1. 'web': Use for general facts, news, official websites, and broad overviews.
-    2. 'git': Use if the topic could involve technical implementations, datasets, open-source projects, white papers, or curated resource lists (e.g., "Awesome-Himalaya-Data").
-    3. 'db': Use ONLY if the topic closely matches or overlaps with one of the titles in DB_CONTENT.
+    2. 'git': Use if the topic could involve technical implementations, datasets, public repositories, open-source projects, white papers, or curated resource lists (e.g., "Awesome-Himalaya-Data").
+    3. 'db': Use ONLY if the content closely matches or overlaps with one of the titles in DB_CONTENT.
 
     Instructions:
     - You must return a Python list of strings containing one or more of: ['web', 'git', 'db'].
@@ -78,7 +78,7 @@ orchestrator_prompts = ChatPromptTemplate.from_template(
 
 response = orchestrator_model.invoke(
     orchestrator_prompts.format_messages(
-        user_content="Building a RAG pipeline for Himalayan Geographic Data",
+        user_content="give me code for simple langchain agent",
         db_content=['Langchain with postgres', 'Vector search', 'Large language models']
     )
 )

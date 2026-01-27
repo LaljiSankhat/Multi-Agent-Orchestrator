@@ -18,8 +18,6 @@ from services.text_splitter import split_text_into_chunks
 load_dotenv()
 
 
-conn = get_pg_connection()
-cur = conn.cursor()
 
 
 
@@ -150,7 +148,14 @@ def db_query_node(state: AgentState):
 
 
 def final_summary_node(state: AgentState):
-    pass
+    # Combine all research gathered
+    combined_content = "\n\n".join(state['research_content'])
+    
+    response = orchestrator_model.invoke(
+        f"Summarize the following research into a final report:\n{combined_content}"
+    )
+    
+    return {"final_research_summary": response.content}
 
 
 def approval_node(state: AgentState):
@@ -162,7 +167,7 @@ def approval_node(state: AgentState):
         }
     )
 
-    return {'approved': True if decision == "yes" else False}
+    return {"approval": True if decision == "yes" else False}
 
 def assign_workers(state: AgentState):
     sends = []
@@ -178,6 +183,10 @@ def assign_workers(state: AgentState):
     return sends
 
 def save_db_node(state: AgentState):
+
+    conn = get_pg_connection()
+    cur = conn.cursor()
+
 
     query = """
     INSERT INTO documents (title, content)
@@ -245,11 +254,11 @@ config = {
 
 intial_state = {
     "content_to_research": "",
-    "research_content": None,
-    "node_to_call": None,
-    "final_research_summary": None,
+    "research_content": [],
+    "node_to_call": [],
+    "final_research_summary": "",
     "approval": None,
-    "db_titles": None
+    "db_titles": []
 }
 
 
@@ -269,20 +278,18 @@ async def main():
 
 
         while True:
-            user_topic = input("\nEnter topic (or exit): ").strip()
-            if user_topic.lower() in ["exit", "quit"]:
-                break
+            # user_topic = input("\nEnter topic (or exit): ").strip()
+            # if user_topic.lower() in ["exit", "quit"]:
+            #     break
 
             await workflow.ainvoke(
                 {
-                    "userMessage": user_topic,
-                    "topic": user_topic,
-                    "contents": [],
-                    "summarized_content": "",
-                    "deepResearch": "",
-                    "userInterest": None,
-                    "userRelatedResearch": None,
-                    "satisfied": None
+                    "content_to_research": "",
+                    "research_content": [],
+                    "node_to_call": [],
+                    "final_research_summary": "",
+                    "approval": None,
+                    "db_titles": []
                 },
                 config
             )

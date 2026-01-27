@@ -24,7 +24,7 @@ web_search_agent_model = ChatGroq(
 
 
 
-def search_github(topic, language="Python", max_results=5):
+def search_github(topic, language="Python", max_results=2):
     """
     Search GitHub for repositories related to a topic.
     
@@ -48,18 +48,21 @@ def search_github(topic, language="Python", max_results=5):
 
     results = response.json().get("items", [])
     repos = []
+    cnt = 0
     for repo in results:
+        cnt += 1
         repos.append({
             "name": repo["full_name"],
             "url": repo["html_url"],
             "description": repo["description"]
         })
+        if cnt == 5: break
     
 
     urls = []
-    print(repos)
+    # print(repos)
     for r in repos:
-        print(r["name"], "-", r["url"])
+        # print(r["name"], "-", r["url"])
         urls.append(r['url'])
 
 
@@ -95,8 +98,8 @@ def search_github(topic, language="Python", max_results=5):
             print(f"Skipping {url} | Reason: {e}")
         
 
-    print("\n \n ")
-    print(contents)
+    # print("\n \n ")
+    # print(contents)
 
     res = "".join(contents)
     return res
@@ -129,55 +132,55 @@ Your goal:
 )
 
 
-if __name__ == "__main__":
-    result = github_agent.invoke(
-        {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": (
-                        "Research the following topic thoroughly:\n\n"
-                        "Retrieval Augmented Generation (RAG) for LLMs\n\n"
-                        "Instructions:\n"
-                        "- Prefer authoritative and recent sources\n"
-                        "- Merge overlapping information\n"
-                        "- Keep the output factual"
-                    ),
-                }
-            ]
-        }
-    )
+# if __name__ == "__main__":
+#     result = github_agent.invoke(
+#         {
+#             "messages": [
+#                 {
+#                     "role": "user",
+#                     "content": (
+#                         "Research the following topic thoroughly:\n\n"
+#                         "Retrieval Augmented Generation (RAG) for LLMs\n\n"
+#                         "Instructions:\n"
+#                         "- Prefer authoritative and recent sources\n"
+#                         "- Merge overlapping information\n"
+#                         "- Keep the output factual"
+#                     ),
+#                 }
+#             ]
+#         }
+#     )
 
-    # print("\nFINAL OUTPUT:\n")
-    # print(result)
+#     # print("\nFINAL OUTPUT:\n")
+#     # print(result)
 
-    print("\n \n")
+#     print("\n \n")
 
-    for i, msg in enumerate(result["messages"], 1):
-        print(f"\n--- Step {i} | {msg.__class__.__name__} ---")
+#     for i, msg in enumerate(result["messages"], 1):
+#         print(f"\n--- Step {i} | {msg.__class__.__name__} ---")
 
-        if isinstance(msg, HumanMessage):
-            print("USER:\n", msg.content)
+#         if isinstance(msg, HumanMessage):
+#             print("USER:\n", msg.content)
 
-        elif isinstance(msg, ToolMessage):
-            print(f"TOOL [{msg.name}]:\n", msg.content[:800], "...\n")
+#         elif isinstance(msg, ToolMessage):
+#             print(f"TOOL [{msg.name}]:\n", msg.content[:800], "...\n")
 
-        elif isinstance(msg, AIMessage):
-            if msg.tool_calls:
-                print("AI decided to call tools:")
-                for tc in msg.tool_calls:
-                    print(f" - {tc['name']}({tc['args']})")
-            else:
-                print("AI FINAL OUTPUT:\n", msg.content)
+#         elif isinstance(msg, AIMessage):
+#             if msg.tool_calls:
+#                 print("AI decided to call tools:")
+#                 for tc in msg.tool_calls:
+#                     print(f" - {tc['name']}({tc['args']})")
+#             else:
+#                 print("AI FINAL OUTPUT:\n", msg.content)
     
 
     
-    tool_calls = [
-        m for m in result["messages"]
-        if isinstance(m, ToolMessage)
-    ]
+#     tool_calls = [
+#         m for m in result["messages"]
+#         if isinstance(m, ToolMessage)
+#     ]
 
-    print("Total tool calls:", len(tool_calls))
+#     print("Total tool calls:", len(tool_calls))
 
-    print("\n \n")
+#     print("\n \n")
 

@@ -80,50 +80,49 @@ Your goal:
 )
 
 
-if __name__ == "__main__":
-    # topic = input("Enter topic to search: ")
+# if __name__ == "__main__":
 
-    result = postgres_agent.invoke(
-        {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": (
-                        f"Research the following topic thoroughly:\n\n"
-                        f"vector search\n\n"
-                        "Instructions:\n"
-                        "- Use database information only\n"
-                        "- Merge overlapping results\n"
-                        "- Keep the output factual and concise"
-                    ),
-                }
-            ]
-        }
-    )
+#     result = postgres_agent.invoke(
+#         {
+#             "messages": [
+#                 {
+#                     "role": "user",
+#                     "content": (
+#                         f"Research the following topic thoroughly:\n\n"
+#                         f"vector search\n\n"
+#                         "Instructions:\n"
+#                         "- Use database information only\n"
+#                         "- Merge overlapping results\n"
+#                         "- Keep the output factual and concise"
+#                     ),
+#                 }
+#             ]
+#         }
+#     )
 
-    print("\n\n")
+#     print("\n\n")
 
-    for i, msg in enumerate(result["messages"], 1):
-        print(f"\n--- Step {i} | {msg.__class__.__name__} ---")
+#     for i, msg in enumerate(result["messages"], 1):
+#         print(f"\n--- Step {i} | {msg.__class__.__name__} ---")
 
-        if isinstance(msg, HumanMessage):
-            print("USER:\n", msg.content)
+#         if isinstance(msg, HumanMessage):
+#             print("USER:\n", msg.content)
 
-        elif isinstance(msg, ToolMessage):
-            print(f"TOOL [{msg.name}]:\n", msg.content[:800], "...\n")
+#         elif isinstance(msg, ToolMessage):
+#             print(f"TOOL [{msg.name}]:\n", msg.content[:800], "...\n")
 
-        elif isinstance(msg, AIMessage):
-            if msg.tool_calls:
-                print("AI decided to call tools:")
-                for tc in msg.tool_calls:
-                    print(f" - {tc['name']}({tc['args']})")
-            else:
-                print("AI FINAL OUTPUT:\n", msg.content)
+#         elif isinstance(msg, AIMessage):
+#             if msg.tool_calls:
+#                 print("AI decided to call tools:")
+#                 for tc in msg.tool_calls:
+#                     print(f" - {tc['name']}({tc['args']})")
+#             else:
+#                 print("AI FINAL OUTPUT:\n", msg.content)
 
-    tool_calls = [
-        m for m in result["messages"]
-        if isinstance(m, ToolMessage)
-    ]
+#     tool_calls = [
+#         m for m in result["messages"]
+#         if isinstance(m, ToolMessage)
+#     ]
 
-    print("\nTotal tool calls:", len(tool_calls))
-    print("\n\n")
+#     print("\nTotal tool calls:", len(tool_calls))
+#     print("\n\n")

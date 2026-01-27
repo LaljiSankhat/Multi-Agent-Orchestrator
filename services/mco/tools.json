@@ -1,0 +1,15 @@
+{
+    "tools": [
+      {
+        "name": "remote_grep",
+        "description": "Search public GitHub repositories for code related to a topic",
+        "arguments": {
+          "query": { "type": "string", "required": true },
+          "language": { "type": "string", "default": "python" },
+          "max_repos": { "type": "number", "default": 3 },
+          "max_results": { "type": "number", "default": 20 }
+        }
+      }
+    ]
+  }
+  
