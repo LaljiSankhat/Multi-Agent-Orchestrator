@@ -3,12 +3,18 @@ import requests
 from dotenv import load_dotenv
 
 from services.make_pretty_output import pretty
+from services.web_search_agent_demo import web_search_agent_model
 
 from langchain_groq import ChatGroq
 from langchain.agents import create_agent
 from langchain_core.tools import Tool
+from langchain_core.messages import HumanMessage
+
+from langfuse.langchain import CallbackHandler
 
 load_dotenv()
+
+langfuse_handler = CallbackHandler()
 
 
 def search_github_repositories(query: str):
@@ -47,7 +53,7 @@ def search_github_files(research_topic: str):
     Finds code demos and Jupyter Notebooks for a research topic.
     Returns file paths and direct links to code examples.
     """
-    query = f"{research_topic} extension:ipynb path:examples path:demo path:notebooks"
+    query = f"{research_topic} extension:ipynb extension:ipynb path:examples path:demo path:notebooks"
     url = f"https://api.github.com/search/code?q={query}"
 
     headers = {
@@ -97,41 +103,22 @@ def fetch_code(url: str):
 
 
 
+llm = ChatGroq(
+    api_key=os.getenv("GROQ_CODE_GENERATION_API_KEY"),
+    model="llama-3.3-70b-versatile",
+    callbacks=[langfuse_handler],
+)
 def code_generation(query: str):
 
-    API_KEY = os.getenv("GROQ_CODE_GENERATION_API_KEY")
-    model = "llama-3.3-70b-versatile"
-    url = "https://api.groq.com/openai/v1/chat/completions"
-
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    data = {
-        "model": model,
-        "messages": [
-            {"role": "user", "content": f"{query}"}
-        ]
-    }
-
-    resp = requests.post(url, headers=headers, json=data)
-    # print(resp.json().content)
-    data = resp.json()
-    output = data["choices"][0]["message"]["content"]
-    # print(output)
-    return output
+    response = llm.invoke([
+        HumanMessage(content=query)
+    ])
+    print(response.content)
+    return response.content
 
 
 # code_generation("Write a C++ code for dijkstra algorithm")
 
-web_search_agent_model = ChatGroq(
-    api_key=os.getenv("GROQ_API_KEY"),
-    model="llama-3.3-70b-versatile",
-    temperature=0,
-    max_tokens=None,
-    # reasoning_format="parsed",
-)
 
 
 
@@ -174,23 +161,23 @@ Your goal:
 
 
 
-if __name__ == "__main__":
-    result = github_agent.invoke(
-        {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": (
-                        "Explain LangChain. "
-                        "First find top GitHub repositories. "
-                        "Then find demo code or notebooks. "
-                        "Finally generate a simple example."
-                    ),
-                }
-            ]
-        }
-    )
+# if __name__ == "__main__":
+#     result = github_agent.invoke(
+#         {
+#             "messages": [
+#                 {
+#                     "role": "user",
+#                     "content": (
+#                         "Explain LangChain. "
+#                         "First find top GitHub repositories. "
+#                         "Then find demo code or notebooks. "
+#                         "Finally generate a simple example."
+#                     ),
+#                 }
+#             ]
+#         }
+#     )
 
-    print(pretty(result))
+#     print(pretty(result))
 
     

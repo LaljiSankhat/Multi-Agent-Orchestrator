@@ -7,12 +7,17 @@ from services.tavily_search import tavily_client
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 import os
 
+from langfuse.langchain import CallbackHandler
+
 load_dotenv()
+
+langfuse_handler = CallbackHandler()
 
 
 web_search_agent_model = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY"),
     model="llama-3.3-70b-versatile",
+    callbacks=[langfuse_handler],
     temperature=0,
     max_tokens=None,
     # reasoning_format="parsed",

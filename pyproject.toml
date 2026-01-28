@@ -28,7 +28,8 @@ dependencies = [
     "uvicorn (>=0.40.0,<0.41.0)",
     "mcp-use (>=1.6.0,<2.0.0)",
     "py-mcp-client (>=0.0.8,<0.0.9)",
-    "fastmcp (>=3.0.0b1)"
+    "fastmcp (>=3.0.0b1)",
+    "langfuse (>=3.12.1,<4.0.0)"
 ]
 
 [tool.poetry]

@@ -8,8 +8,11 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 
 import os
+from langfuse.langchain import CallbackHandler
 
 load_dotenv()
+
+langfuse_handler = CallbackHandler()
 
 # Required env vars:
 # DATABASE_URL=postgresql://user:password@localhost:5432/dbname
@@ -60,6 +63,7 @@ def search_postgres(topic: str) -> str:
 db_model = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY"),
     model="llama-3.3-70b-versatile",
+    callbacks=[langfuse_handler],
     temperature=0,
 )
 

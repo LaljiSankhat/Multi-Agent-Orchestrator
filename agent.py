@@ -10,6 +10,9 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import Send, interrupt, Command
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
+from langfuse.langchain import CallbackHandler
+from langfuse import observe
+
 from services.web_search_agent_demo import web_agent, web_search_agent_model
 from services.git_search import github_agent
 from services.db_query_demo import postgres_agent, get_pg_connection
@@ -18,7 +21,7 @@ from services.make_pretty_output import pretty
 
 load_dotenv()
 
-
+langfuse_handler = CallbackHandler()
 
 class AgentState(TypedDict):
     content_to_research: str
@@ -29,9 +32,9 @@ class AgentState(TypedDict):
     db_titles: List[str]
 
 
-
+@observe(name="ask_topic_node")
 def ask_topic_node(state: AgentState):
-    topic = interrupt({"question": "Enter research topic"})
+    topic = interrupt({"question": "Enter research topic.. (exit to terminate)"})
 
     if topic.lower() == "exit":
         return Command(goto=END)
@@ -46,6 +49,7 @@ def ask_topic_node(state: AgentState):
     }
 
 
+@observe(name="fetch_db_titles")
 def fetch_db_titles(state: AgentState):
     conn = get_pg_connection()
     cur = conn.cursor()
@@ -56,6 +60,7 @@ def fetch_db_titles(state: AgentState):
     return {"db_titles": titles}
 
 
+@observe(name="orchestrator_node")
 async def orchestrator_node(state: AgentState):
     response = orchestrator_model.invoke(
         orchestrator_prompts.format_messages(
@@ -76,12 +81,13 @@ async def orchestrator_node(state: AgentState):
     return state
 
 
+@observe(name="assign_workers")
 def assign_workers(state: AgentState):
     sends = []
     for node in state["node_to_call"]:
         if node == "web":
             sends.append(Send("web_search", state))
-        elif node == "github":
+        elif node == "git":
             sends.append(Send("github_search", state))
         elif node == "db":
             sends.append(Send("db_search", state))
@@ -89,6 +95,7 @@ def assign_workers(state: AgentState):
 
 
 
+@observe(name="web_search_node")
 async def web_search_node(state: AgentState):
 
     print("\n Doing web search... \n")
@@ -116,6 +123,7 @@ async def web_search_node(state: AgentState):
 
 
 
+@observe(name="github_search_node")
 async def github_search_node(state: AgentState):
 
     print("\n Doing github search... \n")
@@ -142,6 +150,7 @@ async def github_search_node(state: AgentState):
     return {"research_content": [pretty(result)]}
 
 
+@observe(name="db_search_node")
 async def db_search_node(state: AgentState):
 
     print("\n Searching in DB... \n ")
@@ -169,10 +178,12 @@ async def db_search_node(state: AgentState):
     return {"research_content": [pretty(result)]}
 
 
+@observe(name="join_results_node")
 def join_results_node(state: AgentState):
     return state
 
 
+@observe(name="final_summary_node")
 async def final_summary_node(state: AgentState):
     print("\n Deep thinking on content... \n")
     combined = "\n\n".join(state["research_content"])
@@ -184,6 +195,7 @@ async def final_summary_node(state: AgentState):
     return {"final_research_summary": response.content}
 
 
+@observe(name="approval_node")
 def approval_node(state: AgentState):
     decision = interrupt({
         "question": "Do you approve this research?",
@@ -193,6 +205,7 @@ def approval_node(state: AgentState):
 
 
 
+@observe(name="save_db_node")
 def save_db_node(state: AgentState):
     conn = get_pg_connection()
     cur = conn.cursor()
@@ -203,16 +216,14 @@ def save_db_node(state: AgentState):
     conn.commit()
     cur.close()
     conn.close()
-
-    new_state = {
-                    "content_to_research": "",
-                    "research_content": [],
-                    "node_to_call": [],
-                    "final_research_summary": "",
-                    "approval": None,
-                    "db_titles": [],
-                },
-    return new_state
+    return {
+                "content_to_research": "",
+                "research_content": [],
+                "node_to_call": [],
+                "final_research_summary": "",
+                "approval": None,
+                "db_titles": [],
+            }
 
 
 
@@ -270,7 +281,8 @@ async def main():
             config = {
                 "configurable": {
                     "thread_id": f"research-{uuid.uuid4()}"
-                }
+                },
+                "callbacks": [langfuse_handler]
             }
 
             await workflow.ainvoke(
