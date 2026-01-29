@@ -77,7 +77,7 @@ You are a professional database research agent.
 Your goal:
 - Given a topic, search it in the PostgreSQL database
 - Use the search_postgres tool to retrieve relevant data
-- Call the tool multiple times if needed
+- If needed, call the tool multiple times but atmax 5 times
 - Remove irrelevant or duplicate content
 - Return a clean, factual, research-ready response
 """,
